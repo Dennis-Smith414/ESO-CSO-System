@@ -3,7 +3,6 @@
 #define NUM_RACKS 5 // Number of server racks, this will be an argument provided to main
 #define MAX_TEMP 70.0 // The maximum tolerable temperature before our system deems a server rack is too hot
 
-
 int main (int argc, char *argv[]){
     // For checking argv:
     // printf("argc: %d \n", argc);
