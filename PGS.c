@@ -5,31 +5,26 @@
 
 int main (int argc, char *argv[]){
     // For checking argv:
-    printf("argc: %d \n", argc);
+    // printf("argc: %d \n", argc);
 
-    for (int i = 0; i < argc; i++){
-        printf("argument #%d: %lf \n", i, (float)atof(argv[i]));
-    }
-    printf("\n");
+    // for (int i = 0; i < argc; i++){
+    //     printf("argument #%d: %d \n", i, (int)atof(argv[i]));
+    // }
+    // printf("\n");
 
     // ignore first argument, put all others into an array
     // Initialize the SAS_output, all values are 0 at first
-    int SAS_output[NUM_RACKS] = {0};
+    int PGS_output[NUM_RACKS] = {0};
 
-    // Iterate through argv (the input to SAS)
-    // check if it's above or equal to max temp: it's too hot SAS_output[i] = 1, if it's fine SAS_output[i] = 0 
-    for (int i = 0; i < NUM_RACKS; i++){
-        if ((float)atof(argv[i+1]) >= MAX_TEMP)
-            SAS_output[i] = 1;
-        else
-            SAS_output[i] = 0;
+    for (int i = 1; i < argc; i++){
+        PGS_output[i-1] = (int)atof(argv[i]);
     }
 
-    // Loop through SAS_output to check the validity:
-    // (this will be replaced with a loop that loads SAS_output 
+    // Loop through PGS_output to check the validity:
+    // (this will be replaced with a loop that loads PGS_output 
     // onto a pipe for the next thread to pick up)
     for (int i = 0; i < argc-1; i++){
-        printf("output #%d: %d \n", i, SAS_output[i]);
+        printf("output #%d: %d \n", i, PGS_output[i]);
     }
 
     return 0;
