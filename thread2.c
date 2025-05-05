@@ -3,14 +3,14 @@
 #define length 5
 
 int main (int argc, char *argv[]){
-    printf("argc: %d \n", argc);
+    // printf("argc: %d \n", argc);
 
-    for (int i = 0; i < argc; i++){
-        printf("argument #%d: %lf \n", i, (float)atof(argv[i]));
-    }
+    // for (int i = 0; i < argc; i++){
+    //     printf("argument #%d: %lf \n", i, (float)atof(argv[i]));
+    // }
 
 
-    printf("\n");
+    // printf("\n");
 
     // ignore first argument, put all others into an array
     int output[length] = {0};
