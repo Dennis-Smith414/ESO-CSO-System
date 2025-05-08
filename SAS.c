@@ -5,12 +5,12 @@
 
 int main (int argc, char *argv[]){
     // For checking argv:
-    // printf("argc: %d \n", argc);
+    printf("argc: %d \n", argc);
 
-    // for (int i = 0; i < argc; i++){
-    //     printf("argument #%d: %lf \n", i, (float)atof(argv[i]));
-    // }
-    // printf("\n");
+    for (int i = 0; i < argc; i++){
+        printf("argument #%d: %lf \n", i, (float)atof(argv[i]));
+    }
+    printf("\n");
 
     // ignore first argument, put all others into an array
     // Initialize the SAS_output, all values are 0 at first
