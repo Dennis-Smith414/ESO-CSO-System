@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <time.h>
+#include <fcntl.h>
 
 //These can be removed just for testing
 #define NUM_RACKS 10
@@ -43,7 +44,20 @@ void simulate_cooling(int rack_id) {
 }
 
 void* plan_execution_service(void* arg) {
+  int fd;
+  int rack_status[NUM_RACKS];
+  
+  if ((fd = open(PIPE, O_RDONLY)) < 0) {
+    perror("Failed to open the read pipe");
+    exit(1);
+  }
+
     while (run) {
+        if (read(fd, rack_status, NUM_RACKS * sizeof(int)) < 0) {
+          perror("Failed to read from pipe");
+          break;
+        }
+        
         for (int i = 0; i < NUM_RACKS; i++) {
             pthread_mutex_lock(&mutex);
             if (rack_status[i] == 1) { 
