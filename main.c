@@ -22,64 +22,63 @@ int SAS_OUTPUT[MAX_RACKS] = {0};
 int PGS_OUTPUT[MAX_RACKS] = {0};
 int PES_OUTPUT[MAX_RACKS] = {0};
 
-  void NEM(int NUM_RACKS){
-    // Check if thread 1, then close these:
-    close(NEM_SAS_PIPE[0]); // Close read end of NEM --> SAS pipe
-    close(SAS_PGS_PIPE[0]); // Close read end of SAS --> PGS pipe
-    close(PGS_PES_PIPE[0]); // Close read end of PGS --> PES pipe
-    // Thread 1: Noisy Enterprise Model:
-    while (1){
-      
-      printf("ur mom \n");
-    }
+void NEM(int NUM_RACKS){
+  // Check if thread 1, then close these:
+  close(NEM_SAS_PIPE[0]); // Close read end of NEM --> SAS pipe
+  close(SAS_PGS_PIPE[0]); // Close read end of SAS --> PGS pipe
+  close(PGS_PES_PIPE[0]); // Close read end of PGS --> PES pipe
+  // Thread 1: Noisy Enterprise Model:
+  while (1){
+    printf("ur mom \n");
   }
+}
 
-  void SAS(int NUM_RACKS){
-    // Check if thread 2, then close these:
-    close(SAS_PGS_PIPE[0]); // Close read end of SAS --> PGS pipe
-    close(PGS_PES_PIPE[0]); // Close read end of PGS --> PES pipe
-    close(PES_NEM_PIPE[0]); // Close read end of PES --> NEM pipe
-    // Thread 2: Situation Assessment Service:
-    while(1){
-      float buff[MAX_RACKS];
-      read(NEM_SAS_PIPE[0], buff, sizeof(buff));
+void SAS(int NUM_RACKS){
+  // Check if thread 2, then close these:
+  close(SAS_PGS_PIPE[0]); // Close read end of SAS --> PGS pipe
+  close(PGS_PES_PIPE[0]); // Close read end of PGS --> PES pipe
+  close(PES_NEM_PIPE[0]); // Close read end of PES --> NEM pipe
+  // Thread 2: Situation Assessment Service:
+  while(1){
+    float buff[MAX_RACKS];
+    read(NEM_SAS_PIPE[0], buff, sizeof(buff));
 
-      for (int i = 0; i < NUM_RACKS; i++){
-        if (buff[i] >= COOLING_THRESHOLD)
-          SAS_OUTPUT[i] = 1;
-        else
-          SAS_OUTPUT[i] = 0;
-      }
-      write(SAS_PGS_PIPE[1], SAS_OUTPUT, sizeof(int)*MAX_RACKS);
-      sleep(1);
+    for (int i = 0; i < NUM_RACKS; i++){
+      if (buff[i] >= COOLING_THRESHOLD)
+        SAS_OUTPUT[i] = 1;
+      else
+        SAS_OUTPUT[i] = 0;
     }
+    write(SAS_PGS_PIPE[1], SAS_OUTPUT, sizeof(int)*MAX_RACKS);
+    sleep(1);
   }
+}
 
-  void PGS(){
-    // Check if thread 3, then close these:
-    close(NEM_SAS_PIPE[0]); // Close read end of NEM --> SAS pipe
-    close(PGS_PES_PIPE[0]); // Close read end of PGS --> PES pipe
-    close(PES_NEM_PIPE[0]); // Close read end of PES --> NEM pipe
-    // Thread 3: Plan Generation Service
-    while(1){
-      read(SAS_PGS_PIPE[0], PGS_OUTPUT, sizeof(PGS_OUTPUT));
-      write(PGS_PES_PIPE[1], PGS_OUTPUT, sizeof(int)*MAX_RACKS);
-      sleep(1);
-    }
+void PGS(){
+  // Check if thread 3, then close these:
+  close(NEM_SAS_PIPE[0]); // Close read end of NEM --> SAS pipe
+  close(PGS_PES_PIPE[0]); // Close read end of PGS --> PES pipe
+  close(PES_NEM_PIPE[0]); // Close read end of PES --> NEM pipe
+  // Thread 3: Plan Generation Service
+  while(1){
+    read(SAS_PGS_PIPE[0], PGS_OUTPUT, sizeof(PGS_OUTPUT));
+    write(PGS_PES_PIPE[1], PGS_OUTPUT, sizeof(int)*MAX_RACKS);
+    sleep(1);
   }
+}
 
-  void PES(){
-    // Check if thread 4, then close these:
-    close(NEM_SAS_PIPE[0]); // Close read end of NEM --> SAS pipe
-    close(SAS_PGS_PIPE[0]); // Close read end of SAS --> PGS pipe
-    close(PES_NEM_PIPE[0]); // Close read end of PES --> NEM pipe
-    // Thread 4: Plan Execution Service
-    while(1){
-      read(PGS_PES_PIPE[0], PES_OUTPUT, sizeof(PES_OUTPUT));
-      write(PES_NEM_PIPE[1], PGS_OUTPUT, sizeof(int)*MAX_RACKS);
-      sleep(1);
-    }
+void PES(){
+  // Check if thread 4, then close these:
+  close(NEM_SAS_PIPE[0]); // Close read end of NEM --> SAS pipe
+  close(SAS_PGS_PIPE[0]); // Close read end of SAS --> PGS pipe
+  close(PES_NEM_PIPE[0]); // Close read end of PES --> NEM pipe
+  // Thread 4: Plan Execution Service
+  while(1){
+    read(PGS_PES_PIPE[0], PES_OUTPUT, sizeof(PES_OUTPUT));
+    write(PES_NEM_PIPE[1], PGS_OUTPUT, sizeof(int)*MAX_RACKS);
+    sleep(1);
   }
+}
 
 int main (int argc, char *argv[]) {
 
