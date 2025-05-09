@@ -11,60 +11,30 @@
 #define MAX_RACKS 256
 #define COOLING_THRESHOLD 30
 #define MAX_TEMP 50 
-#define MIN_TEMP 20 
+#define MIN_TEMP 20
 
-int main (int argc, char *argv[]) {
+int NEM_SAS_PIPE[2];
+int SAS_PGS_PIPE[2];
+int PGS_PES_PIPE[2];
+int PES_NEM_PIPE[2];
+int NEM_OUTPUT[MAX_RACKS] = {0};
+int SAS_OUTPUT[MAX_RACKS] = {0};
+int PGS_OUTPUT[MAX_RACKS] = {0};
+int PES_OUTPUT[MAX_RACKS] = {0};
 
-  int NUM_RACKS = 1;
-  if (argc > 1){
-    NUM_RACKS = (int)atof(argv[1]);
-  }
-
-  int NEM_OUTPUT[MAX_RACKS] = {0};
-  int SAS_OUTPUT[MAX_RACKS] = {0};
-  int PGS_OUTPUT[MAX_RACKS] = {0};
-  int PES_OUTPUT[MAX_RACKS] = {0};
-
-  int NEM_SAS_PIPE[2];
-  if (pipe(NEM_SAS_PIPE)){
-    printf("Failed to create NEM_SAS_PIPE\n");
-    return 1;
-  }
-  int SAS_PGS_PIPE[2];
-  if (pipe(SAS_PGS_PIPE)){
-    printf("Failed to create SAS_PGS_PIPE\n");
-    return 1;
-  }
-  int PGS_PES_PIPE[2];
-  if (pipe(PGS_PES_PIPE)){
-    printf("Failed to create PGS_PES_PIPE\n");
-    return 1;
-  }
-  int PES_NEM_PIPE[2];
-  if (pipe(PES_NEM_PIPE)){
-    printf("Failed to create PES_NEM_PIPE\n");
-    return 1;
-  }
-
-  /*
-  close(NEM_SAS_PIPE[0]); // Close read end of NEM --> SAS pipe
-  close(SAS_PGS_PIPE[0]); // Close read end of SAS --> PGS pipe
-  close(PGS_PES_PIPE[0]); // Close read end of PGS --> PES pipe
-  close(PES_NEM_PIPE[0]); // Close read end of PES --> NEM pipe
-  */
-  
-  void NEM(){
+  void NEM(int NUM_RACKS){
     // Check if thread 1, then close these:
     close(NEM_SAS_PIPE[0]); // Close read end of NEM --> SAS pipe
     close(SAS_PGS_PIPE[0]); // Close read end of SAS --> PGS pipe
     close(PGS_PES_PIPE[0]); // Close read end of PGS --> PES pipe
     // Thread 1: Noisy Enterprise Model:
     while (1){
+      
       printf("ur mom \n");
     }
   }
 
-  void SAS(){
+  void SAS(int NUM_RACKS){
     // Check if thread 2, then close these:
     close(SAS_PGS_PIPE[0]); // Close read end of SAS --> PGS pipe
     close(PGS_PES_PIPE[0]); // Close read end of PGS --> PES pipe
@@ -111,10 +81,41 @@ int main (int argc, char *argv[]) {
     }
   }
 
+int main (int argc, char *argv[]) {
+
+  int NUM_RACKS = 1;
+  if (argc > 1){
+    NUM_RACKS = (int)atof(argv[1]);
+  }
+
+  if (pipe(NEM_SAS_PIPE)){
+    printf("Failed to create NEM_SAS_PIPE\n");
+    return 1;
+  }
+  if (pipe(SAS_PGS_PIPE)){
+    printf("Failed to create SAS_PGS_PIPE\n");
+    return 1;
+  }
+  if (pipe(PGS_PES_PIPE)){
+    printf("Failed to create PGS_PES_PIPE\n");
+    return 1;
+  }
+  if (pipe(PES_NEM_PIPE)){
+    printf("Failed to create PES_NEM_PIPE\n");
+    return 1;
+  }
+
+  /*
+  close(NEM_SAS_PIPE[0]); // Close read end of NEM --> SAS pipe
+  close(SAS_PGS_PIPE[0]); // Close read end of SAS --> PGS pipe
+  close(PGS_PES_PIPE[0]); // Close read end of PGS --> PES pipe
+  close(PES_NEM_PIPE[0]); // Close read end of PES --> NEM pipe
+  */
+
   // Thread 1:
   pid_t run_NEM;
   run_NEM = fork();
-  if (run_NEM == 0) NEM();
+  if (run_NEM == 0) NEM(NUM_RACKS);
   else if (run_NEM < 0){
     printf("Noisy Enterprise Model forked incorrectly.\n");
     return 1;
@@ -123,7 +124,7 @@ int main (int argc, char *argv[]) {
     // Thread 2:
     pid_t run_SAS;
     run_SAS = fork();
-    if (run_SAS == 0) SAS();
+    if (run_SAS == 0) SAS(NUM_RACKS);
     else if (run_SAS < 0){
       printf("Situation Assessment Service forked incorrectly.\n");
       return 1;
