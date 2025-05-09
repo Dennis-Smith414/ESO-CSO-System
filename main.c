@@ -38,7 +38,7 @@ void NEM(int NUM_RACKS){
     for (int i = 0; i < NUM_RACKS; i++){
       float temperature;
       // Fan is off:
-      if (fan_status[i] == 0 || fan_time_on > COOLING_CYCLES){
+      if (fan_status[i] == 0 || fan_time_on[i] > COOLING_CYCLES){
         temperature = ((float)rand()/(float)RAND_MAX)*(MAX_TEMP-MIN_TEMP) + MIN_TEMP;
         fan_time_on[i] = 0;
       }
