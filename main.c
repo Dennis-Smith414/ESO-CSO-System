@@ -58,7 +58,7 @@ int main (int argc, char *argv[]) {
     close(SAS_PGS_PIPE[0]); // Close read end of SAS --> PGS pipe
     close(PGS_PES_PIPE[0]); // Close read end of PGS --> PES pipe
     // Thread 1: Noisy Enterprise Model:
-    while (run_NEM){
+    while (1){
 
     }
   }
@@ -69,7 +69,7 @@ int main (int argc, char *argv[]) {
     close(PGS_PES_PIPE[0]); // Close read end of PGS --> PES pipe
     close(PES_NEM_PIPE[0]); // Close read end of PES --> NEM pipe
     // Thread 2: Situation Assessment Service:
-    while(){
+    while(1){
       float buff[MAX_RACKS];
       read(NEM_SAS_PIPE[0], buff, sizeof(buff));
 
@@ -90,7 +90,7 @@ int main (int argc, char *argv[]) {
     close(PGS_PES_PIPE[0]); // Close read end of PGS --> PES pipe
     close(PES_NEM_PIPE[0]); // Close read end of PES --> NEM pipe
     // Thread 3: Plan Generation Service
-    while(){
+    while(1){
       read(SAS_PGS_PIPE[0], PGS_OUTPUT, sizeof(PGS_OUTPUT));
       write(PGS_PES_PIPE[1], PGS_OUTPUT, sizeof(int)*MAX_RACKS);
       sleep(1);
@@ -103,21 +103,50 @@ int main (int argc, char *argv[]) {
     close(SAS_PGS_PIPE[0]); // Close read end of SAS --> PGS pipe
     close(PES_NEM_PIPE[0]); // Close read end of PES --> NEM pipe
     // Thread 4: Plan Execution Service
-    while(){
+    while(1){
       read(PGS_PES_PIPE[0], PES_OUTPUT, sizeof(PES_OUTPUT));
       write(PES_NEM_PIPE[1], PGS_OUTPUT, sizeof(int)*MAX_RACKS);
       sleep(1);
     }
   }
 
+  // Thread 1:
   pid_t run_NEM;
   run_NEM = fork();
-  if (run_NEM == 0){
-    NEM();
-  }
+  if (run_NEM == 0) NEM();
   else if (run_NEM < 0){
     printf("Noisy Enterprise Model forked incorrectly.\n");
     return 1;
+  }
+  else {
+    // Thread 2:
+    pid_t run_SAS;
+    run_SAS = fork();
+    if (run_SAS == 0) SAS();
+    else if (run_SAS < 0){
+      printf("Situation Assessment Service forked incorrectly.\n");
+      return 1;
+    }
+    else {
+      // Thread 3:
+      pid_t run_PGS;
+      run_PGS = fork();
+      if (run_PGS == 0) PGS();
+      else if (run_PGS < 0){
+        printf("Plan Generation Service forked incorrectly.\n");
+        return 1;
+      }
+      else {
+        // Thread 4:
+        pid_t run_PES;
+        run_PES = fork();
+        if (run_PES == 0) PES();
+        else if (run_PES < 0){
+          printf("Plan Execution Service forked incorrectly.\n");
+          return 1;
+        }
+      }
+    }
   }
 
   return 0;
