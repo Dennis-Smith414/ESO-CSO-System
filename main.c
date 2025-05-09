@@ -9,9 +9,10 @@
 //These can be removed just for testing
 // #define NUM_RACKS 10
 #define MAX_RACKS 256
-#define COOLING_THRESHOLD 30
-#define MAX_TEMP 50 
+#define COOLING_THRESHOLD 70
+#define MAX_TEMP 90
 #define MIN_TEMP 20
+#define COOLING_CYCLES 20
 
 int NEM_SAS_PIPE[2];
 int SAS_PGS_PIPE[2];
@@ -28,8 +29,29 @@ void NEM(int NUM_RACKS){
   close(SAS_PGS_PIPE[0]); // Close read end of SAS --> PGS pipe
   close(PGS_PES_PIPE[0]); // Close read end of PGS --> PES pipe
   // Thread 1: Noisy Enterprise Model:
+  float racks[MAX_RACKS];
+  int fan_status[MAX_RACKS] = {0}; // 1 = fan is on, 0 = fan is off
+  int fan_time_on[MAX_RACKS] = {0}; // Fan can be on for COOLING_CYCLES loops
   while (1){
-    printf("ur mom \n");
+    read(PES_NEM_PIPE[0], fan_status, sizeof(fan_status));
+
+    for (int i = 0; i < NUM_RACKS; i++){
+      float temperature;
+      // Fan is off:
+      if (fan_status[i] == 0 || fan_time_on > COOLING_CYCLES){
+        temperature = ((float)rand()/(float)RAND_MAX)*(MAX_TEMP-MIN_TEMP) + MIN_TEMP;
+        fan_time_on[i] = 0;
+      }
+      // Fan is on:
+      else if (fan_status[i] == 1 && fan_time_on[i] <= COOLING_CYCLES){
+        temperature = ((float)rand()/(float)RAND_MAX)*(COOLING_THRESHOLD-MIN_TEMP) + MIN_TEMP;
+        ++fan_time_on[i];
+      }
+      racks[i] = temperature;
+      NEM_OUTPUT[i] = racks[i];
+    }
+    write(NEM_SAS_PIPE[1], NEM_OUTPUT, sizeof(int)*MAX_RACKS);
+    sleep(1);
   }
 }
 
