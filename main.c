@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <sys/types.h>
 #include <pthread.h>
 #include <time.h>
 #include <fcntl.h>
@@ -59,7 +60,7 @@ int main (int argc, char *argv[]) {
     close(PGS_PES_PIPE[0]); // Close read end of PGS --> PES pipe
     // Thread 1: Noisy Enterprise Model:
     while (1){
-
+      printf("ur mom \n");
     }
   }
 
