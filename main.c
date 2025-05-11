@@ -13,11 +13,6 @@
 #define MAX_TEMP 90
 #define MIN_TEMP 20
 #define COOLING_CYCLES 20
-
-int NEM_SAS_PIPE[2];
-int SAS_PGS_PIPE[2];
-int PGS_PES_PIPE[2];
-int PES_NEM_PIPE[2];
 int NEM_OUTPUT[MAX_RACKS] = {0};
 int SAS_OUTPUT[MAX_RACKS] = {0};
 int PGS_OUTPUT[MAX_RACKS] = {0};
@@ -103,29 +98,48 @@ int PES_OUTPUT[MAX_RACKS] = {0};
 // }
 
 int main (int argc, char *argv[]) {
+  if (argc != 2) {
+    printf("Please specify number of racks\n");
+    return 1;
+  }
+
+  int num_racks = atoi(argv[1]);
+  if (num_racks == 0) {
+    printf("Improper formatting on number of racks\n");
+    return 1;
+  }
+  
+  if (num_racks > MAX_RACKS) {
+    printf("Too many racks");
+    return 1;
+  }
+
   int NEM_SAS_PIPE[2];
   int SAS_PGS_PIPE[2];
   int PGS_PES_PIPE[2];
   int PES_NEM_PIPE[2];
 
   if (pipe(NEM_SAS_PIPE) || pipe(SAS_PGS_PIPE) || pipe(PGS_PES_PIPE) || pipe(PES_NEM_PIPE)) {
-    printf("One of the pipes failed");
+    printf("One of the pipes failed\n");
     return 1;
   }
 
-  // first argument to each of these execl's is read pipe, second is write pipe
+  // first argument to each of these execl's is read pipe, second is write pipe,
+  // third is number of racks
   pid_t pid = fork();
   if (pid < 0) {
-    printf("Error on first fork");
+    printf("Error on first fork\n");
     return 1;
   } else if (pid == 0) { // spawn nem child
     char read_arg[16];
     char write_arg[16];
+    char num_racks_arg[16];
     snprintf(read_arg, 16, "%d", PES_NEM_PIPE[0]);
     snprintf(write_arg, 16, "%d", NEM_SAS_PIPE[1]);
-    execl("./NEM", "NEM", read_arg, write_arg, NULL);
+    snprintf(num_racks_arg, 16, "%d",num_racks);
+    execl("./NEM", "NEM", read_arg, write_arg, num_racks_arg, NULL);
 
-    printf("First execl returned");
+    printf("First execl returned unexpectedly\n");
     return 1;
   }
   // int NUM_RACKS = 1;
@@ -195,6 +209,11 @@ int main (int argc, char *argv[]) {
   //     }
   //   }
   // }
+
+  // without this, children will run in the terminal and can't be ctrl+C-ed
+  while (1) {
+    sleep(1);
+  }
 
   return 0;
 }
