@@ -68,7 +68,7 @@ int main (int argc, char *argv[]) {
                 }
             }
 
-            write(write_pipe, rack_temps, num_racks);
+            write(write_pipe, rack_temps, num_racks * sizeof *rack_temps);
         } else { // In this case there is something to read. Data format is array twice as long as num_racks,
                  // first section is fans and second is power
             

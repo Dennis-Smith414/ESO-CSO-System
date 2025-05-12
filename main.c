@@ -141,6 +141,57 @@ int main (int argc, char *argv[]) {
 
     printf("First execl returned unexpectedly\n");
     return 1;
+  } else {
+    pid = fork();
+    if (pid < 0) {
+      printf("Error on second fork\n");
+      return 1;
+    } else if (pid == 0) { // spawn nem child
+      char read_arg[16];
+      char write_arg[16];
+      char num_racks_arg[16];
+      snprintf(read_arg, 16, "%d", NEM_SAS_PIPE[0]);
+      snprintf(write_arg, 16, "%d", SAS_PGS_PIPE[1]);
+      snprintf(num_racks_arg, 16, "%d",num_racks);
+      execl("./SAS", "SAS", read_arg, write_arg, num_racks_arg, NULL);
+
+      printf("Second execl returned unexpectedly\n");
+      return 1;
+    } else {
+      pid = fork();
+      if (pid < 0) {
+        printf("Error on third fork\n");
+        return 1;
+      } else if (pid == 0) { // spawn nem child
+        char read_arg[16];
+        char write_arg[16];
+        char num_racks_arg[16];
+        snprintf(read_arg, 16, "%d", SAS_PGS_PIPE[0]);
+        snprintf(write_arg, 16, "%d", PGS_PES_PIPE[1]);
+        snprintf(num_racks_arg, 16, "%d",num_racks);
+        execl("./PGS", "PGS", read_arg, write_arg, num_racks_arg, NULL);
+
+        printf("Third execl returned unexpectedly\n");
+        return 1;
+      } else {
+        pid = fork();
+        if (pid < 0) {
+          printf("Error on fouth fork\n");
+          return 1;
+        } else if (pid == 0) { // spawn nem child
+          char read_arg[16];
+          char write_arg[16];
+          char num_racks_arg[16];
+          snprintf(read_arg, 16, "%d", PGS_PES_PIPE[0]);
+          snprintf(write_arg, 16, "%d", PES_NEM_PIPE[1]);
+          snprintf(num_racks_arg, 16, "%d",num_racks);
+          execl("./PES", "PES", read_arg, write_arg, num_racks_arg, NULL);
+
+          printf("Fourth execl returned unexpectedly\n");
+          return 1;
+        }
+      }
+    }
   }
   // int NUM_RACKS = 1;
   // if (argc > 1){
