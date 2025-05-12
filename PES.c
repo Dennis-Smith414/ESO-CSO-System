@@ -56,7 +56,10 @@ int main(int argc, char *argv[]) {
                     power[i] = buffer[i+num_racks];
                     if (oldPower != power[i]) {
                         need_to_write = 1;
-                        if (power[i]) printf("Turning on rack no. %d\n", i+1);
+                        if (power[i]) {
+                            printf("Turning on rack no. %d\n", i+1);
+                            time_off[i] = 0;
+                        }
                         else printf("Turning off rack no. %d\n", i+1);
                     }
                 }
@@ -80,6 +83,7 @@ int main(int argc, char *argv[]) {
                     if (time_off[i] >= MAX_TIME_OFF) {
                         need_to_write = 1;
                         power[i] = 1;
+                        time_off[i] = 0;
                         printf("Turning on rack no. %d\n", i);
                     }
                 }
