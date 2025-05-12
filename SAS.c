@@ -54,7 +54,7 @@ int main (int argc, char *argv[]){
                         avg += all_temps[i*AVG_WINDOW + j];
                     }
 
-                    double real_avg = (double)(avg) / (double)(AVG_WINDOW);
+                    double real_avg = (double)(avg) / (double)(current_iter);
                     avg_temps[i] = real_avg;
                 }
                 

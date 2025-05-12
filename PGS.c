@@ -24,7 +24,7 @@ int main (int argc, char *argv[]){
         power[i] = 1;
     }
 
-    int *buffer = malloc(2 * num_racks * sizeof *buffer);
+    float *buffer = malloc(2 * num_racks * sizeof *buffer);
     int *write_buffer = malloc(2 * num_racks * sizeof *buffer);
     fd_set read_fds;
 
