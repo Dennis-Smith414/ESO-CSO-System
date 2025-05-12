@@ -70,17 +70,17 @@ int main (int argc, char *argv[]) {
                 
                 printf("TEMPS\n");
                 for (int i = 0; i < num_racks; i++) {
-                    printf("Rack %d: %d C\n", i, rack_temps[i]);
+                    printf("Rack %d: %d C\n", i+1, rack_temps[i]);
                 }
                 printf("\nFANS\n");
                 for (int i = 0; i < num_racks; i++) {
-                    if (fans[i]) printf("Rack %d's fan is on\n", i);
-                    else printf("Rack %d's fan is off\n", i);
+                    if (fans[i]) printf("Rack %d's fan is on\n", i+1);
+                    else printf("Rack %d's fan is off\n", i+1);
                 }
                 printf("\nPOWER\n");
                 for (int i = 0; i < num_racks; i++) {
-                    if (power[i]) printf("Rack %d is powered on\n", i);
-                    else printf("Rack %d is powered off\n", i);
+                    if (power[i]) printf("Rack %d is powered on\n", i+1);
+                    else printf("Rack %d is powered off\n", i+1);
                 }
                 printf("\n");
                 write(write_pipe, rack_temps, num_racks * sizeof *rack_temps);
