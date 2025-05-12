@@ -1,139 +1,90 @@
 #include <stdio.h>
-#include <pthread.h>
+#include <time.h>
 #include <unistd.h>
 #include <stdlib.h>
-#include <time.h>
-#include <fcntl.h>
+#define MAX_TIME_OFF 35
 
-//These can be removed just for testing
-#define NUM_RACKS 10
-#define COOLING_THRESHOLD 30
-#define MAX_TEMP 50 
-#define MIN_TEMP 20 
-
-//These can be removed in final implementation
-// Shared arrays for rack status and temperatures
-int rack_status[NUM_RACKS]; // 1 for hot, 0 for cool
-int rack_temps[NUM_RACKS];  // Simulated temperatures for each rack
-pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
-int run = 1;
-
-// Simulate cooling 
-void simulate_cooling(int rack_id) {
-    printf("Cooling rack %d (Initial Temp: %d°C)\n", rack_id, rack_temps[rack_id]);
-    
-    // Simulate fan speed increase (This can be changed)
-    int fan_speed = (rack_temps[rack_id] - COOLING_THRESHOLD) / 2;
-    if (fan_speed < 1) fan_speed = 1;
-    if (fan_speed > 10) fan_speed = 10;
-    printf("Adjusting fan speed for rack %d to level %d\n", rack_id, fan_speed);
-    
-    // Simulate temperature drop over time
-    // Three steps of temp decrease 5 degress each time
-    for (int i = 0; i < 3; i++) { 
-
-        rack_temps[rack_id] -= 5; 
-        if (rack_temps[rack_id] < MIN_TEMP) rack_temps[rack_id] = MIN_TEMP;
-        printf("Rack %d Temp after cooling step %d: %d°C\n", rack_id, i + 1, rack_temps[rack_id]);
-        sleep(1); //Time for the cooling
-    }
-    
-    // Mark as cooled
-    rack_status[rack_id] = 0;
-    printf("Rack %d cooled successfully. Final Temp: %d°C\n", rack_id, rack_temps[rack_id]);
-}
-
-void* plan_execution_service(void* arg) {
-  int fd;
-  int rack_status[NUM_RACKS];
-  
-  if ((fd = open(PIPE, O_RDONLY)) < 0) {
-    perror("Failed to open the read pipe");
-    exit(1);
-  }
-
-    while (run) {
-        if (read(fd, rack_status, NUM_RACKS * sizeof(int)) < 0) {
-          perror("Failed to read from pipe");
-          break;
-        }
-        
-        for (int i = 0; i < NUM_RACKS; i++) {
-            pthread_mutex_lock(&mutex);
-            if (rack_status[i] == 1) { 
-                simulate_cooling(i);
-            }
-            pthread_mutex_unlock(&mutex);
-        }
-        sleep(1); // Check every second
-    }
-    return NULL;
-}
-
-// Test case 1: Single hot rack
-void test_case_1() {
-    printf("\n=== Test Case 1: Single Hot Rack ===\n");
-    for (int i = 0; i < NUM_RACKS; i++) {
-        rack_status[i] = 0;
-        rack_temps[i] = MIN_TEMP;
-    }
-    rack_status[2] = 1; 
-    rack_temps[2] = 45;
-    sleep(5); 
-}
-
-// Test case 2: Multiple hot racks
-void test_case_2() {
-    printf("\n=== Test Case 2: Multiple Hot Racks ===\n");
-    for (int i = 0; i < NUM_RACKS; i++) {
-        rack_status[i] = 0;
-        rack_temps[i] = MIN_TEMP;
-    }
-    rack_status[1] = 1; rack_temps[1] = 40; 
-    rack_status[4] = 1; rack_temps[4] = 50;
-    rack_status[7] = 1; rack_temps[7] = 35;
-    sleep(10); 
-}
-
-// Test case 3: No hot racks
-void test_case_3() {
-    printf("\n=== Test Case 3: No Hot Racks ===\n");
-    for (int i = 0; i < NUM_RACKS; i++) {
-        rack_status[i] = 0;
-        rack_temps[i] = MIN_TEMP;
-    }
-    sleep(3);
-}
-
-int main() {
-    pthread_t pes_thread;
-    
-    // Initialize random seed for temperature simulation
-    srand(time(NULL));
-    
-    // Init arrays
-    for (int i = 0; i < NUM_RACKS; i++) {
-        rack_status[i] = 0;
-        rack_temps[i] = MIN_TEMP;
-    }
-    
-    // call thread 4
-    if (pthread_create(&pes_thread, NULL, plan_execution_service, NULL) != 0) {
-        printf("Failed to create Thread 4\n");
+int main(int argc, char *argv[]) {
+    if (argc != 4) {
+        printf("You should not run this by itself; run main instead.\n");
         return 1;
     }
-    
-    //test cases
-    test_case_1();
-    test_case_2();
-    test_case_3();
-    
-    run = 0;
-    
-    // Wait for Thread 4 to finish
-    pthread_join(pes_thread, NULL);
-    
-    // Cleanup
-    pthread_mutex_destroy(&mutex);
+
+    int read_pipe = atoi(argv[1]);
+    int write_pipe = atoi(argv[2]);
+    int num_racks = atoi(argv[3]);
+
+    int *fans = malloc(num_racks * sizeof *fans);
+    int *power = malloc(num_racks * sizeof *power);
+    int *time_off = malloc(num_racks * sizeof *time_off);
+
+    for (int i = 0; i < num_racks; i++) {
+        fans[i] = 0;
+        power[i] = 1;
+        time_off[i] = 0;
+    }
+
+    int *buffer = malloc(2 * num_racks * sizeof *buffer);
+    int *write_buffer = malloc(2 * num_racks * sizeof *buffer);
+    fd_set read_fds;
+    time_t prev_time = time(NULL);
+
+    while (1) {
+        FD_ZERO(&read_fds);
+        FD_SET(read_pipe, &read_fds);
+        struct timeval timeout;
+        timeout.tv_sec = 1;
+        timeout.tv_usec = 0;
+        int select_return = select(read_pipe+1, &read_fds, NULL, NULL, &timeout);
+
+        if (select_return == -1) {
+            printf("error reading from pipe in PES");
+        } else if (select_return > 0) { // reading
+            ssize_t bytes_read = read(read_pipe, buffer, num_racks * sizeof *buffer);
+            if (bytes_read > 0) {
+                int need_to_write = 0;
+
+                for (int i = 0; i < num_racks; i++) {
+                    fans[i] = buffer[i];
+                    if (fans[i] != 0) need_to_write = 1;
+                    int oldPower = power[i];
+                    power[i] = buffer[i+num_racks];
+                    if (oldPower != power[i]) need_to_write = 1;
+                }
+
+                if (need_to_write) {
+                    write(write_pipe, buffer, 2 * num_racks * sizeof *buffer);
+                }
+            } else if (bytes_read == 0) {
+                printf("PES read pipe closed unexpectedly\n");
+            } else {
+                printf("Other PES read pipe error\n");
+            }
+
+        } else { //timed out: keep track of powered off racks
+            time_t cur_time = time(NULL);
+            int need_to_write = 0;
+
+            for (int i = 0; i < num_racks; i++) {
+                if (!power[i]) {
+                    time_off[i] += cur_time - prev_time;
+                    if (time_off[i] >= MAX_TIME_OFF) {
+                        need_to_write = 1;
+                        power[i] = 1;
+                    }
+                }
+            }
+            prev_time = cur_time;
+
+            if (need_to_write) {
+                for (int i = 0; i < num_racks; i++) {
+                    write_buffer[i] = 0; //don't change fans, only turn on
+                    write_buffer[i+num_racks] = power[i];
+                }
+                write(write_pipe, write_buffer, 2 * num_racks * sizeof *write_buffer);
+            }
+        }
+    }
+
     return 0;
 }

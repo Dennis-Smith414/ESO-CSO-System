@@ -25,6 +25,7 @@ int main (int argc, char *argv[]){
     }
 
     int *buffer = malloc(2 * num_racks * sizeof *buffer);
+    int *write_buffer = malloc(2 * num_racks * sizeof *buffer);
     fd_set read_fds;
 
     while (1) {
@@ -52,10 +53,10 @@ int main (int argc, char *argv[]){
                 }
 
                 for (int i = 0; i < num_racks; i++) {
-                    buffer[i] = fans[i];
-                    buffer[i+num_racks] = power[i];
+                    write_buffer[i] = fans[i];
+                    write_buffer[i+num_racks] = power[i];
                 }
-                write(write_pipe, buffer, 2 * num_racks * sizeof *buffer);
+                write(write_pipe, write_buffer, 2 * num_racks * sizeof *write_buffer);
             } else if (bytes_read == 0) {
                 printf("PGS read pipe closed unexpectedly\n");
             } else {
