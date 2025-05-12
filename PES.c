@@ -46,10 +46,19 @@ int main(int argc, char *argv[]) {
 
                 for (int i = 0; i < num_racks; i++) {
                     fans[i] = buffer[i];
-                    if (fans[i] != 0) need_to_write = 1;
+                    if (fans[i] != 0) {
+                        need_to_write = 1;
+                        if (fans[i] == -1) printf("Turning off fan no. %d\n", i);
+                        else if (fans[i] == 1) printf("Turning on fan no. %d\n", i);
+                    }
+
                     int oldPower = power[i];
                     power[i] = buffer[i+num_racks];
-                    if (oldPower != power[i]) need_to_write = 1;
+                    if (oldPower != power[i]) {
+                        need_to_write = 1;
+                        if (power[i]) printf("Turning on rack no. %d\n", i);
+                        else printf("Turning off rack no. %d\n", i);
+                    }
                 }
 
                 if (need_to_write) {
@@ -71,6 +80,7 @@ int main(int argc, char *argv[]) {
                     if (time_off[i] >= MAX_TIME_OFF) {
                         need_to_write = 1;
                         power[i] = 1;
+                        printf("Turning on rack no. %d\n", i);
                     }
                 }
             }

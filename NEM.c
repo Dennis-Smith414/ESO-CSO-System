@@ -67,9 +67,24 @@ int main (int argc, char *argv[]) {
                         rack_temps[i] += temp;
                     }
                 }
+                
+                printf("TEMPS\n");
+                for (int i = 0; i < num_racks; i++) {
+                    printf("Rack %d: %d C\n", i, rack_temps[i]);
+                }
+                printf("\nFANS\n");
+                for (int i = 0; i < num_racks; i++) {
+                    if (fans[i]) printf("Rack %d's fan is on\n", i);
+                    else printf("Rack %d's fan is off\n", i);
+                }
+                printf("\nPOWER\n");
+                for (int i = 0; i < num_racks; i++) {
+                    if (power[i]) printf("Rack %d is powered on\n", i);
+                    else printf("Rack %d is powered off\n", i);
+                }
+                printf("\n");
+                write(write_pipe, rack_temps, num_racks * sizeof *rack_temps);
             }
-
-            write(write_pipe, rack_temps, num_racks * sizeof *rack_temps);
         } else { // In this case there is something to read. Data format is array twice as long as num_racks,
                  // first section is fans and second is power
                  // fans can be 1, -1 or 0 (turn on, turn off, no change)
