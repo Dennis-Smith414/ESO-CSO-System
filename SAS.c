@@ -31,7 +31,7 @@ int main (int argc, char *argv[]){
         if (select_return == -1) {
             printf("error reading from pipe in SAS");
         } else if (select_return > 0) { // reading and writing
-            ssize_t bytes_read = read(read_pipe, buffer, sizeof(buffer));
+            ssize_t bytes_read = read(read_pipe, buffer, num_racks * sizeof *buffer);
             if (bytes_read > 0) {
                 if (current_iter != AVG_WINDOW) { // not yet read the full window
                     for (int i = 0; i < num_racks; i++) {

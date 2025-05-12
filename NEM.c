@@ -22,6 +22,7 @@ int main (int argc, char *argv[]) {
     int *fans = malloc(num_racks * sizeof *fans);
     int *power = malloc(num_racks * sizeof *power);
     for (int i = 0; i < num_racks; i++) {
+        rack_temps[i] = ROOM_TEMP;
         fans[i] = 0;
         power[i] = 1;
     }
@@ -71,13 +72,21 @@ int main (int argc, char *argv[]) {
             write(write_pipe, rack_temps, num_racks * sizeof *rack_temps);
         } else { // In this case there is something to read. Data format is array twice as long as num_racks,
                  // first section is fans and second is power
+                 // fans can be 1, -1 or 0 (turn on, turn off, no change)
             
             if (FD_ISSET(read_pipe, &read_fds)) {
-                ssize_t bytes_read = read(read_pipe, buffer, sizeof(buffer));
+                ssize_t bytes_read = read(read_pipe, buffer, num_racks * 2 * sizeof *buffer);
                 if (bytes_read > 0) {
                     for (int i = 0; i < num_racks; i++) {
-                        fans[i] = buffer[i];
+                        int started_off = !power[i];
+
+                        if (buffer[i] == 1) {
+                            fans[i] = 1;
+                        } else if (buffer[i] == -1) {
+                            fans[i] = 0;
+                        }
                         power[i] = buffer[i+num_racks];
+                        if (started_off && power[i]) fans[i] = 0; // when powered back on, fan starts off
                     }
                 } else if (bytes_read == 0) {
                     printf("NEM read pipe closed unexpectedly\n");

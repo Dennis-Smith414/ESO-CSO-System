@@ -130,7 +130,7 @@ int main (int argc, char *argv[]) {
   if (pid < 0) {
     printf("Error on first fork\n");
     return 1;
-  } else if (pid == 0) { // spawn nem child
+  } else if (pid == 0) {
     char read_arg[16];
     char write_arg[16];
     char num_racks_arg[16];
@@ -146,7 +146,7 @@ int main (int argc, char *argv[]) {
     if (pid < 0) {
       printf("Error on second fork\n");
       return 1;
-    } else if (pid == 0) { // spawn nem child
+    } else if (pid == 0) {
       char read_arg[16];
       char write_arg[16];
       char num_racks_arg[16];
@@ -162,7 +162,7 @@ int main (int argc, char *argv[]) {
       if (pid < 0) {
         printf("Error on third fork\n");
         return 1;
-      } else if (pid == 0) { // spawn nem child
+      } else if (pid == 0) {
         char read_arg[16];
         char write_arg[16];
         char num_racks_arg[16];
@@ -178,7 +178,7 @@ int main (int argc, char *argv[]) {
         if (pid < 0) {
           printf("Error on fouth fork\n");
           return 1;
-        } else if (pid == 0) { // spawn nem child
+        } else if (pid == 0) {
           char read_arg[16];
           char write_arg[16];
           char num_racks_arg[16];
