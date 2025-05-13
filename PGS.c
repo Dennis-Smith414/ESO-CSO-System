@@ -46,11 +46,16 @@ int main (int argc, char *argv[]){
             if (bytes_read > 0) {
                 // like in NEM, 1 is turn on, -1 is turn off, 0 is do nothing
                 for (int i = 0; i < num_racks; i++) {
+                    printf("Received: %f\n", buffer[i]);
                     if (buffer[i] >= TURN_OFF_TEMP) {
+                        printf("%f\n", buffer[i]);
+                        printf("Turn off?\n");
                         power[i] = 0;
                     } else if (buffer[i] >= START_FAN_TEMP) {
                         fans[i] = 1;
                     } else if (buffer[i] <= STOP_FAN_TEMP) {
+                        printf("%f\n", buffer[i]);
+                        printf("Turn off fan?\n");
                         fans[i] = -1;
                     }
                 }
@@ -59,7 +64,6 @@ int main (int argc, char *argv[]){
                     write_buffer[i] = fans[i];
                     write_buffer[i+num_racks] = power[i];
                 }
-                usleep(20*1000); // NOTE: Added this delay due to issues with reading
                 write(write_pipe, write_buffer, 2 * num_racks * sizeof *write_buffer);
             } else if (bytes_read == 0) {
                 printf("PGS read pipe closed unexpectedly\n");
