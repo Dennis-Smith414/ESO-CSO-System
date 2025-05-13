@@ -65,6 +65,7 @@ int main(int argc, char *argv[]) {
                 }
 
                 if (need_to_write) {
+                    usleep(20*1000); // NOTE: Added this delay due to issues with reading
                     write(write_pipe, buffer, 2 * num_racks * sizeof *buffer);
                 }
             } else if (bytes_read == 0) {
@@ -95,6 +96,7 @@ int main(int argc, char *argv[]) {
                     write_buffer[i] = 0; //don't change fans, only turn on
                     write_buffer[i+num_racks] = power[i];
                 }
+                usleep(20*1000); // NOTE: Added this delay due to issues with reading
                 write(write_pipe, write_buffer, 2 * num_racks * sizeof *write_buffer);
             }
         }

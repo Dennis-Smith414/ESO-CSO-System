@@ -68,7 +68,7 @@ int main (int argc, char *argv[]) {
                     }
                 }
                 
-                printf("TEMPS\n");
+                printf("\nTEMPS\n");
                 for (int i = 0; i < num_racks; i++) {
                     printf("Rack %d: %d C\n", i+1, rack_temps[i]);
                 }
@@ -83,6 +83,7 @@ int main (int argc, char *argv[]) {
                     else printf("Rack %d is powered off\n", i+1);
                 }
                 printf("\n");
+                usleep(20*1000); // NOTE: Added this delay due to issues with reading
                 write(write_pipe, rack_temps, num_racks * sizeof *rack_temps);
             }
         } else { // In this case there is something to read. Data format is array twice as long as num_racks,
