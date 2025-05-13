@@ -1,7 +1,9 @@
+#include <bits/types/struct_timeval.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <sys/select.h>
 #include <time.h>
 #include <unistd.h>
-#include <stdlib.h>
 #define MAX_TIME_OFF 35
 
 int main(int argc, char *argv[]) {
