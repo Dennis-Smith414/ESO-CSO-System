@@ -1,0 +1,7 @@
+#!/bin/bash 
+
+rm NEM 
+rm PES
+rm PGS 
+rm SAS
+rm main
