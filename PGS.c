@@ -1,5 +1,8 @@
+#include <bits/types/struct_timeval.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/select.h>
+#include <time.h>
 #include <unistd.h>
 #define START_FAN_TEMP 45
 #define STOP_FAN_TEMP 35
@@ -56,6 +59,7 @@ int main (int argc, char *argv[]){
                     write_buffer[i] = fans[i];
                     write_buffer[i+num_racks] = power[i];
                 }
+                usleep(20*1000); // NOTE: Added this delay due to issues with reading
                 write(write_pipe, write_buffer, 2 * num_racks * sizeof *write_buffer);
             } else if (bytes_read == 0) {
                 printf("PGS read pipe closed unexpectedly\n");

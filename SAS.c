@@ -1,5 +1,8 @@
+#include <bits/types/struct_timeval.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/select.h>
+#include <time.h>
 #include <unistd.h>
 #define AVG_WINDOW 4
 
@@ -57,7 +60,7 @@ int main (int argc, char *argv[]){
                     double real_avg = (double)(avg) / (double)(current_iter);
                     avg_temps[i] = real_avg;
                 }
-                
+                usleep(20*1000); // NOTE: Added this delay due to issues with reading
                 write(write_pipe, avg_temps, num_racks * sizeof *avg_temps);
             } else if (bytes_read == 0) {
                 printf("SAS read pipe closed unexpectedly\n");
