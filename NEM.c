@@ -19,18 +19,12 @@ int main (int argc, char *argv[]) {
 
     // fans and power are booleans
     int *rack_temps = malloc(num_racks * sizeof *rack_temps);
-    int *fans = malloc(num_racks * sizeof *fans);
-    int *power = malloc(num_racks * sizeof *power);
-    for (int i = 0; i < num_racks; i++) {
-        rack_temps[i] = ROOM_TEMP;
-        fans[i] = 0;
-        power[i] = 1;
-    }
+    int *rack_states = malloc(num_racks * sizeof *rack_states); //0 = power off; 1 = power off, fan on; 2 = power on, fan on
 
     srand(time(NULL));
     fd_set read_fds;
     time_t start_time = time(NULL);
-    int *buffer = malloc(2 * num_racks * sizeof *buffer);
+    int *buffer = malloc(num_racks * sizeof *buffer);
 
     while (1) {
         FD_ZERO(&read_fds);
@@ -49,22 +43,18 @@ int main (int argc, char *argv[]) {
 
                 // cooling/heating simulation
                 for (int i = 0; i < num_racks; i++) {
-                    if (!power[i]) {
+                    if (rack_states[i] == 0) {
                         int temp = (rand() % 3) + 1;
                         rack_temps[i] -= temp;
                         if (rack_temps[i] < ROOM_TEMP) rack_temps[i] = ROOM_TEMP;
-                    }
-
-                    else if (power[i] && fans[i]) {
+                    } else if (rack_states[i] == 1) {
+                        int temp = rand() % 3;
+                        rack_temps[i] += temp;
+                    }else if (rack_states[i] == 2) {
                         int temp = rand() % 3;
                         if (rand() % 10 == 0) temp = -1; //small chance to increase temp even if fan is on
                         rack_temps[i] -= temp;
                         if (rack_temps[i] < ROOM_TEMP) rack_temps[i] = ROOM_TEMP;
-                    }
-
-                    else if (power[i] && !fans[i]) {
-                        int temp = rand() % 3;
-                        rack_temps[i] += temp;
                     }
                 }
                 
@@ -74,7 +64,7 @@ int main (int argc, char *argv[]) {
                 }
                 printf("\nFANS\n");
                 for (int i = 0; i < num_racks; i++) {
-                    if (fans[i]) printf("Rack %d's fan is on\n", i+1);
+                    if (rack_states[i]) printf("Rack %d's fan is on\n", i+1);
                     else printf("Rack %d's fan is off\n", i+1);
                 }
                 printf("\nPOWER\n");
@@ -97,12 +87,12 @@ int main (int argc, char *argv[]) {
                         int started_off = !power[i];
 
                         if (buffer[i] == 1) {
-                            fans[i] = 1;
+                            rack_states[i] = 1;
                         } else if (buffer[i] == -1) {
-                            fans[i] = 0;
+                            rack_states[i] = 0;
                         }
                         power[i] = buffer[i+num_racks];
-                        if (started_off && power[i]) fans[i] = 0; // when powered back on, fan starts off
+                        if (started_off && power[i]) rack_states[i] = 0; // when powered back on, fan starts off
                     }
                 } else if (bytes_read == 0) {
                     printf("NEM read pipe closed unexpectedly\n");
