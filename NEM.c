@@ -17,9 +17,9 @@ int main (int argc, char *argv[]) {
     int write_pipe = atoi(argv[2]);
     int num_racks = atoi(argv[3]);
 
-    // fans and power are booleans
     int *rack_temps = malloc(num_racks * sizeof *rack_temps);
-    int *rack_states = malloc(num_racks * sizeof *rack_states); //0 = power off; 1 = power off, fan on; 2 = power on, fan on
+    int *rack_states = malloc(num_racks * sizeof *rack_states);
+    //0 = power off; 1 = power on, fan off; 2 = power on, fan on
 
     srand(time(NULL));
     fd_set read_fds;
@@ -64,35 +64,32 @@ int main (int argc, char *argv[]) {
                 }
                 printf("\nFANS\n");
                 for (int i = 0; i < num_racks; i++) {
-                    if (rack_states[i]) printf("Rack %d's fan is on\n", i+1);
+                    if (rack_states[i] == 2) printf("Rack %d's fan is on\n", i+1);
                     else printf("Rack %d's fan is off\n", i+1);
                 }
                 printf("\nPOWER\n");
                 for (int i = 0; i < num_racks; i++) {
-                    if (power[i]) printf("Rack %d is powered on\n", i+1);
-                    else printf("Rack %d is powered off\n", i+1);
+                    if (rack_states[i] == 0) printf("Rack %d is powered off\n", i+1);
+                    else printf("Rack %d is powered on\n", i+1);
                 }
                 printf("\n");
-                usleep(20*1000); // NOTE: Added this delay due to issues with reading
                 write(write_pipe, rack_temps, num_racks * sizeof *rack_temps);
             }
-        } else { // In this case there is something to read. Data format is array twice as long as num_racks,
-                 // first section is fans and second is power
-                 // fans can be 1, -1 or 0 (turn on, turn off, no change)
+        } else { // In this case there is something to read. Read data is interpreted as follows:
+                 // 0 = no change; 1 = turn on power; 2 = turn off power; 3 = turn on fan; 4 = turn off fan
             
             if (FD_ISSET(read_pipe, &read_fds)) {
                 ssize_t bytes_read = read(read_pipe, buffer, num_racks * 2 * sizeof *buffer);
                 if (bytes_read > 0) {
                     for (int i = 0; i < num_racks; i++) {
-                        int started_off = !power[i];
-
-                        if (buffer[i] == 1) {
+                        if (buffer[i] == 1 && rack_states[i] == 0)
                             rack_states[i] = 1;
-                        } else if (buffer[i] == -1) {
+                        else if (buffer[i] == 2 && rack_states[i] != 0)
                             rack_states[i] = 0;
-                        }
-                        power[i] = buffer[i+num_racks];
-                        if (started_off && power[i]) rack_states[i] = 0; // when powered back on, fan starts off
+                        else if (buffer[i] == 3 && rack_states[i] == 1)
+                            rack_states[i] = 2;
+                        else if (buffer[i] == 4 && rack_states[i] == 2)
+                            rack_states[i] = 1;
                     }
                 } else if (bytes_read == 0) {
                     printf("NEM read pipe closed unexpectedly\n");
