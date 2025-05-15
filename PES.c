@@ -83,7 +83,6 @@ int main(int argc, char *argv[]) {
             }
 
             if (need_to_write) {
-                printf("writing\n");
                 write(write_pipe, write_buffer, num_racks * sizeof *write_buffer);
             }
         }

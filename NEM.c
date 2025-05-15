@@ -18,15 +18,17 @@ int main (int argc, char *argv[]) {
     int num_racks = atoi(argv[3]);
 
     int *rack_temps = malloc(num_racks * sizeof *rack_temps);
-    int *rack_states = malloc(num_racks * sizeof *rack_states);
-    //0 = power off; 1 = power on, fan off; 2 = power on, fan on
-
+    int *rack_states = malloc(num_racks * sizeof *rack_states); //0 = power off; 1 = power on, fan off; 2 = power on, fan on
+    int *broken_fans = malloc(num_racks * sizeof *broken_fans);
+    
+    srand(time(NULL));
     for (int i = 0; i < num_racks; i++) {
         rack_temps[i] = ROOM_TEMP;
         rack_states[i] = 1;
+        broken_fans[i] = rand() % 20 == 0;
+        // unrealistically high break rate, but it demonstrates the turn off logic
     }
 
-    srand(time(NULL));
     fd_set read_fds;
     time_t start_time = time(NULL);
     int *buffer = malloc(num_racks * sizeof *buffer);
@@ -51,15 +53,18 @@ int main (int argc, char *argv[]) {
                     if (rack_states[i] == 0) {
                         int temp = (rand() % 3) + 1;
                         rack_temps[i] -= temp;
-                        if (rack_temps[i] < ROOM_TEMP) rack_temps[i] = ROOM_TEMP;
+                        if (rack_temps[i] < ROOM_TEMP)
+                            rack_temps[i] = ROOM_TEMP;
                     } else if (rack_states[i] == 1) {
                         int temp = rand() % 3;
                         rack_temps[i] += temp;
-                    }else if (rack_states[i] == 2) {
+                    }else if (rack_states[i] == 2 && !broken_fans[i]) {
                         int temp = rand() % 3;
-                        if (rand() % 10 == 0) temp = -1; //small chance to increase temp even if fan is on
+                        if (rand() % 10 == 0) //small chance to increase temp even if fan is on
+                            temp = -1;
                         rack_temps[i] -= temp;
-                        if (rack_temps[i] < ROOM_TEMP) rack_temps[i] = ROOM_TEMP;
+                        if (rack_temps[i] < ROOM_TEMP)
+                            rack_temps[i] = ROOM_TEMP;
                     }
                 }
                 
@@ -69,13 +74,19 @@ int main (int argc, char *argv[]) {
                 }
                 printf("\nFANS\n");
                 for (int i = 0; i < num_racks; i++) {
-                    if (rack_states[i] == 2) printf("Rack %d's fan is on\n", i+1);
-                    else printf("Rack %d's fan is off\n", i+1);
+                    if (broken_fans[i])
+                        printf("Rack %d's fan is broken\n", i+1);
+                    else if (rack_states[i] == 2)
+                        printf("Rack %d's fan is on\n", i+1);
+                    else
+                        printf("Rack %d's fan is off\n", i+1);
                 }
                 printf("\nPOWER\n");
                 for (int i = 0; i < num_racks; i++) {
-                    if (rack_states[i] == 0) printf("Rack %d is powered off\n", i+1);
-                    else printf("Rack %d is powered on\n", i+1);
+                    if (rack_states[i] == 0)
+                        printf("Rack %d is powered off\n", i+1);
+                    else
+                        printf("Rack %d is powered on\n", i+1);
                 }
                 printf("\n");
                 write(write_pipe, rack_temps, num_racks * sizeof *rack_temps);
@@ -91,9 +102,9 @@ int main (int argc, char *argv[]) {
                             rack_states[i] = 1;
                         else if (buffer[i] == 2 && rack_states[i] != 0)
                             rack_states[i] = 0;
-                        else if (buffer[i] == 3 && rack_states[i] == 1)
+                        else if (buffer[i] == 3 && rack_states[i] == 1 && !broken_fans[i])
                             rack_states[i] = 2;
-                        else if (buffer[i] == 4 && rack_states[i] == 2)
+                        else if (buffer[i] == 4 && rack_states[i] == 2 && !broken_fans[i])
                             rack_states[i] = 1;
                     }
                 } else if (bytes_read == 0) {
