@@ -21,6 +21,11 @@ int main (int argc, char *argv[]) {
     int *rack_states = malloc(num_racks * sizeof *rack_states);
     //0 = power off; 1 = power on, fan off; 2 = power on, fan on
 
+    for (int i = 0; i < num_racks; i++) {
+        rack_temps[i] = ROOM_TEMP;
+        rack_states[i] = 1;
+    }
+
     srand(time(NULL));
     fd_set read_fds;
     time_t start_time = time(NULL);
