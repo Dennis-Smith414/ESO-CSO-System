@@ -48,9 +48,7 @@ int main (int argc, char *argv[]){
                         plans[i] = 3;
                     else if (buffer[i] <= STOP_FAN_TEMP)
                         plans[i] = 4;
-                }
-
-                for (int i = 0; i < num_racks; i++) {
+                    
                     write_buffer[i] = plans[i];
                 }
                 write(write_pipe, write_buffer, num_racks * sizeof *write_buffer);
