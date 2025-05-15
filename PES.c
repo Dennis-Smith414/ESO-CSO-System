@@ -21,7 +21,7 @@ int main(int argc, char *argv[]) {
 
     for (int i = 0; i < num_racks; i++) {
         time_off[i] = 0;
-        inc_timer = 0;
+        inc_timer[i] = 0;
     }
 
     int *buffer = malloc(num_racks * sizeof *buffer);
@@ -57,7 +57,7 @@ int main(int argc, char *argv[]) {
                 }
 
                 if (need_to_write) {
-                    write(write_pipe, buffer, num_racks * sizeof *buffer);
+                    write(write_pipe, write_buffer, num_racks * sizeof *write_buffer);
                 }
             } else if (bytes_read == 0) {
                 printf("PES read pipe closed unexpectedly\n");
@@ -84,10 +84,11 @@ int main(int argc, char *argv[]) {
             }
 
             if (need_to_write) {
+                printf("writing\n");
                 write(write_pipe, write_buffer, num_racks * sizeof *write_buffer);
             }
         }
-        
+
         prev_time = cur_time;
     }
 

@@ -18,10 +18,6 @@ int main (int argc, char *argv[]){
     int write_pipe = atoi(argv[2]);
     int num_racks = atoi(argv[3]);
 
-    // 0 = no change; 2 = turn off power; 3 = turn on fan; 4 = turn off fan.
-    // turning on power is handled by PES
-    int *plans = malloc(num_racks * sizeof *plans);
-
     float *buffer = malloc(num_racks * sizeof *buffer);
     int *write_buffer = malloc(num_racks * sizeof *buffer);
     fd_set read_fds;
@@ -40,16 +36,16 @@ int main (int argc, char *argv[]){
             ssize_t bytes_read = read(read_pipe, buffer, num_racks * sizeof *buffer);
             if (bytes_read > 0) {
                 for (int i = 0; i < num_racks; i++) {
-                    plans[i] = 0;
+                    // 0 = no change; 2 = turn off power; 3 = turn on fan; 4 = turn off fan.
+                    // turning on power is handled by PES
+                    write_buffer[i] = 0;
 
                     if (buffer[i] >= TURN_OFF_TEMP)
-                        plans[i] = 2;
+                        write_buffer[i] = 2;
                     else if (buffer[i] >= START_FAN_TEMP)
-                        plans[i] = 3;
+                        write_buffer[i] = 3;
                     else if (buffer[i] <= STOP_FAN_TEMP)
-                        plans[i] = 4;
-                    
-                    write_buffer[i] = plans[i];
+                        write_buffer[i] = 4;
                 }
                 write(write_pipe, write_buffer, num_racks * sizeof *write_buffer);
             } else if (bytes_read == 0) {

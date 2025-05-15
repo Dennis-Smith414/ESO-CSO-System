@@ -84,7 +84,7 @@ int main (int argc, char *argv[]) {
                  // 0 = no change; 1 = turn on power; 2 = turn off power; 3 = turn on fan; 4 = turn off fan
             
             if (FD_ISSET(read_pipe, &read_fds)) {
-                ssize_t bytes_read = read(read_pipe, buffer, num_racks * 2 * sizeof *buffer);
+                ssize_t bytes_read = read(read_pipe, buffer, num_racks * sizeof *buffer);
                 if (bytes_read > 0) {
                     for (int i = 0; i < num_racks; i++) {
                         if (buffer[i] == 1 && rack_states[i] == 0)
