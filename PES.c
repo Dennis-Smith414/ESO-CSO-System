@@ -78,7 +78,6 @@ int main(int argc, char *argv[]) {
                         write_buffer[i] = 1;
                         time_off[i] = 0;
                         inc_timer[i] = 0;
-                        printf("Turning on rack no. %d\n", i+1);
                     }
                 }
             }
