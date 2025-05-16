@@ -16,22 +16,22 @@ int main(int argc, char *argv[]) {
     int write_pipe = atoi(argv[2]);
     int num_racks = atoi(argv[3]);
 
-    int *fans = malloc(num_racks * sizeof *fans);
-    int *power = malloc(num_racks * sizeof *power);
     int *time_off = malloc(num_racks * sizeof *time_off);
+    int *inc_timer = malloc(num_racks * sizeof *inc_timer);
 
     for (int i = 0; i < num_racks; i++) {
-        fans[i] = 0;
-        power[i] = 1;
         time_off[i] = 0;
+        inc_timer[i] = 0;
     }
 
-    int *buffer = malloc(2 * num_racks * sizeof *buffer);
-    int *write_buffer = malloc(2 * num_racks * sizeof *buffer);
+    int *buffer = malloc(num_racks * sizeof *buffer);
+    int *write_buffer = malloc(num_racks * sizeof *buffer);
     fd_set read_fds;
     time_t prev_time = time(NULL);
 
     while (1) {
+        time_t cur_time = time(NULL);
+
         FD_ZERO(&read_fds);
         FD_SET(read_pipe, &read_fds);
         struct timeval timeout;
@@ -47,28 +47,17 @@ int main(int argc, char *argv[]) {
                 int need_to_write = 0;
 
                 for (int i = 0; i < num_racks; i++) {
-                    fans[i] = buffer[i];
-                    if (fans[i] != 0) {
+                    write_buffer[i] = 0;
+                    if (buffer[i] != 0) {
                         need_to_write = 1;
-                        if (fans[i] == -1) printf("Turning off fan no. %d\n", i+1);
-                        else if (fans[i] == 1) printf("Turning on fan no. %d\n", i+1);
-                    }
-
-                    int oldPower = power[i];
-                    power[i] = buffer[i+num_racks];
-                    if (oldPower != power[i]) {
-                        need_to_write = 1;
-                        if (power[i]) {
-                            printf("Turning on rack no. %d\n", i+1);
-                            time_off[i] = 0;
-                        }
-                        else printf("Turning off rack no. %d\n", i+1);
+                        write_buffer[i] = buffer[i];
+                        if (buffer[i] == 2)
+                            inc_timer[i] = 1;
                     }
                 }
 
                 if (need_to_write) {
-                    usleep(20*1000); // NOTE: Added this delay due to issues with reading
-                    write(write_pipe, buffer, 2 * num_racks * sizeof *buffer);
+                    write(write_pipe, write_buffer, num_racks * sizeof *write_buffer);
                 }
             } else if (bytes_read == 0) {
                 printf("PES read pipe closed unexpectedly\n");
@@ -77,31 +66,28 @@ int main(int argc, char *argv[]) {
             }
 
         } else { //timed out: keep track of powered off racks
-            time_t cur_time = time(NULL);
             int need_to_write = 0;
 
             for (int i = 0; i < num_racks; i++) {
-                if (!power[i]) {
+                write_buffer[i] = 0;
+
+                if (inc_timer[i]) {
                     time_off[i] += cur_time - prev_time;
                     if (time_off[i] >= MAX_TIME_OFF) {
                         need_to_write = 1;
-                        power[i] = 1;
+                        write_buffer[i] = 1;
                         time_off[i] = 0;
-                        printf("Turning on rack no. %d\n", i);
+                        inc_timer[i] = 0;
                     }
                 }
             }
-            prev_time = cur_time;
 
             if (need_to_write) {
-                for (int i = 0; i < num_racks; i++) {
-                    write_buffer[i] = 0; //don't change fans, only turn on
-                    write_buffer[i+num_racks] = power[i];
-                }
-                usleep(20*1000); // NOTE: Added this delay due to issues with reading
-                write(write_pipe, write_buffer, 2 * num_racks * sizeof *write_buffer);
+                write(write_pipe, write_buffer, num_racks * sizeof *write_buffer);
             }
         }
+
+        prev_time = cur_time;
     }
 
     return 0;
